@@ -1,12 +1,13 @@
-FROM python:3.11-slim
+FROM node:22-alpine AS builder
 
 WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
 COPY . .
+RUN npm run build
 
-EXPOSE 8080
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+EXPOSE 3000
